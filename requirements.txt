@@ -14,5 +14,5 @@ tensorboard==2.16.2
 pyyaml==6.0.1
 gdown==4.5.3
 scikit-image==0.23.2
-networkx==3.3
+networkx>=3.0
 opencv-python==4.9.0.80
