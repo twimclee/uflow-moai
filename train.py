@@ -301,7 +301,7 @@ def train(args):
             patience=mhyp.patience,
         ),
     ]
-    logger = TensorBoardLogger(save_dir=mpfm.train_result, name=None, version=None)
+    logger = TensorBoardLogger(save_dir=mpfm.train_result, name=None)
     # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
@@ -312,7 +312,7 @@ def train(args):
         callbacks=callbacks,
         logger=logger,
         num_sanity_val_steps=0,
-        default_root_dir=mpfm.train_result,
+        default_root_dir='.'
     )
 
     trainer.fit(uflow_trainer, train_dataloaders=datamodule.train_dataloader(), val_dataloaders=datamodule.val_dataloader())
