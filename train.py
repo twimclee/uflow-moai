@@ -27,8 +27,8 @@ from src.callbacks import ModelCheckpointByInterval
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
 
-warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
-warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
+# warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
+# warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
 
 LOG = 0
 
@@ -38,7 +38,6 @@ class UFlowTrainer(LightningModule):
     def __init__(
         self,
         flow_model,
-        category,
         learning_rate=1e-3,
         weight_decay=1e-7,
         log_every_n_epochs=25,
@@ -253,7 +252,6 @@ def train(args):
 
     uflow_trainer = UFlowTrainer(
         uflow,
-        args.category,
         mhyp.learning_rate,
         mhyp.weight_decay,
         mhyp.log_every_n_epochs,
@@ -291,13 +289,13 @@ def train(args):
 
     # Train
     # ------------------------------------------------------------------------------------------------------------------
-    training_dir = get_training_dir(Path(args.training_dir) / args.category)
+    # training_dir = get_training_dir(Path(args.training_dir) / args.category)
     callbacks = [
         MyPrintingCallback(),
-        ModelCheckpointByAuROC(training_dir),
-        ModelCheckpointByAuPRO(training_dir),
-        ModelCheckpointBymIoU(training_dir),
-         ModelCheckpointByInterval(training_dir, mhyp.save_ckpt_every),
+        ModelCheckpointByAuROC(mpfm.train_result),
+        ModelCheckpointByAuPRO(mpfm.train_result),
+        ModelCheckpointBymIoU(mpfm.train_result),
+         ModelCheckpointByInterval(mpfm.train_result, mhyp.save_ckpt_every),
         LearningRateMonitor('epoch'),
         EarlyStopping(
             monitor="pixel_auroc",
@@ -305,7 +303,7 @@ def train(args):
             patience=1000,
         ),
     ]
-    logger = TensorBoardLogger(save_dir=str(training_dir / 'logs'), name='UFlow')
+    logger = TensorBoardLogger(save_dir=str(mpfm.train_result / 'logs'), name='UFlow')
     # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
@@ -327,10 +325,10 @@ if __name__ == "__main__":
     # Args
     # ------------------------------------------------------------------------------------------------------------------
     p = argparse.ArgumentParser()
-    p.add_argument("-cat", "--category", type=str, required=True)
-    p.add_argument("-config", "--config_path", default=None, type=str)
-    p.add_argument("-data", "--data", default="data/mvtec", type=str)
-    p.add_argument("-train_dir", "--training_dir", default="training", type=str)
+    # p.add_argument("-cat", "--category", type=str, required=True)
+    # p.add_argument("-config", "--config_path", default=None, type=str)
+    # p.add_argument("-data", "--data", default="data/mvtec", type=str)
+    # p.add_argument("-train_dir", "--training_dir", default="training", type=str)
 
     p.add_argument('--volume', help='volume directory', default='moai')
     p.add_argument('--project', help='project directory', default='test_project')
