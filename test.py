@@ -4,11 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
+from torchvision import transforms
 import yaml
 from tqdm import tqdm
 
 from src.nfa_tree import compute_nfa_anomaly_score_tree
-from src.datamodule import MVTecLightningDatamodule, mvtec_un_normalize
+from src.datamodule import UFlowDatamodule, uflow_un_normalize
 from src.model import UFlow
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -19,13 +20,28 @@ def predict(args):
 
     config = yaml.safe_load(open(Path("configs") / f"{args.category}.yaml", "r"))
 
+    mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
+    std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
+    image_transform = transforms.Compose(
+        [
+            transforms.Resize(input_size),
+            transforms.ToTensor(),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.0),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomRotation(degrees=90),
+            transforms.Normalize(mean.tolist(), std.tolist()),
+        ]
+    )
+
     # Data
-    datamodule = MVTecLightningDatamodule(
+    datamodule = UFlowDatamodule(
         data_dir=args.data,
         category=args.category,
         input_size=config['model']['input_size'],
         batch_train=1,
         batch_test=10,
+        image_transform=image_transform,
         shuffle_test=False
     )
 
@@ -57,7 +73,12 @@ def predict(args):
     score_min, score_max = np.percentile(all_scores.cpu(), 1.), np.percentile(all_scores.cpu(), 99.)
     lnfa_min, lnfa_max = np.percentile(all_lnfas, 1.), np.percentile(all_lnfas, 99.)
 
-    for img, target, score, lnfa in zip(all_images, all_targets, all_scores, all_lnfas):
+    # Ensure the result folder exists
+    result_dir = Path("result") / args.category
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    for idx, (img, target, score, lnfa) in enumerate(zip(all_images, all_targets, all_scores, all_lnfas)):
+        # Likelihood heatmap
         plt.figure(1)
         plt.imshow(img.permute(1, 2, 0).detach().cpu().numpy())
         heatmap = np.clip((score[0].detach().cpu().numpy() - score_min) / (score_max - score_min), 0, 1)
@@ -68,6 +89,11 @@ def predict(args):
         plt.axis('off')
         plt.tight_layout()
 
+        # Score 파일 저장
+        plt.savefig(result_dir / f"likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.close()
+
+        # Log(NFA) heatmap
         plt.figure(2)
         plt.imshow(img.permute(1, 2, 0).detach().cpu().numpy())
         heatmap = np.clip((lnfa[0].detach().cpu().numpy() - lnfa_min) / (lnfa_max - lnfa_min), 0, 1)
@@ -77,8 +103,8 @@ def predict(args):
         plt.title('Log(NFA)')
         plt.axis('off')
         plt.tight_layout()
-
-        plt.show()
+        plt.savefig(result_dir / f"log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.close()
 
 
 if __name__ == "__main__":

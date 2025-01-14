@@ -20,9 +20,9 @@ from src.miou import mIoU
 from src.aupro import AUPRO
 from src.model import UFlow
 from src.nfa_tree import compute_nfa_anomaly_score_tree
-from src.datamodule import MVTecLightningDatamodule, mvtec_un_normalize, get_debug_images_paths
+from src.datamodule import UFlowDatamodule, uflow_un_normalize, get_debug_images_paths
 from src.callbacks import MyPrintingCallback, ModelCheckpointByAuROC, ModelCheckpointByAuPRO, ModelCheckpointBymIoU
-# from src.callbacks import ModelCheckpointByInterval
+from src.callbacks import ModelCheckpointByInterval
 
 warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
 warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
@@ -178,7 +178,7 @@ class UFlowTrainer(LightningModule):
 
             # Generate output probability images
             images_grid = make_grid(
-                mvtec_un_normalize(self.debug_img_resizer(self.test_images)).to('cpu'),
+                uflow_un_normalize(self.debug_img_resizer(self.test_images)).to('cpu'),
                 normalize=True, nrow=1, value_range=(0, 1)
             )
             labels_grid = make_grid(
@@ -256,13 +256,29 @@ def train(args):
 
     # Data
     # ------------------------------------------------------------------------------------------------------------------
-    datamodule = MVTecLightningDatamodule(
+    mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
+    std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
+    image_transform = transforms.Compose(
+        [
+            transforms.Resize(input_size),
+            transforms.ToTensor(),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.0),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomRotation(degrees=90),
+            transforms.Normalize(mean.tolist(), std.tolist()),
+        ]
+    )
+
+    datamodule = UFlowDatamodule(
         data_dir=args.data,
         category=args.category,
         input_size=config['model']['input_size'],
         batch_train=config['trainer']['batch_train'],
         batch_test=config['trainer']['batch_val'],
-        shuffle_test=True
+        image_transform=image_transform,
+        shuffle_test=True,
+
     )
 
     # Train
@@ -273,12 +289,12 @@ def train(args):
         ModelCheckpointByAuROC(training_dir),
         ModelCheckpointByAuPRO(training_dir),
         ModelCheckpointBymIoU(training_dir),
-        # ModelCheckpointByInterval(training_dir, config['trainer']['save_ckpt_every']),
+         ModelCheckpointByInterval(training_dir, config['trainer']['save_ckpt_every']),
         LearningRateMonitor('epoch'),
         EarlyStopping(
             monitor="pixel_auroc",
             mode="max",
-            patience=20,
+            patience=1000,
         ),
     ]
     logger = TensorBoardLogger(save_dir=str(training_dir / 'logs'), name='UFlow')

@@ -14,7 +14,7 @@ from sklearn.metrics import roc_curve
 from tqdm import tqdm
 
 from src.model import UFlow
-from src.datamodule import MVTecLightningDatamodule
+from src.datamodule import UFLowDatamodule
 from src.miou import mIoU
 from src.aupro import AUPRO
 from src.nfa_block import compute_log_nfa_anomaly_score
@@ -47,7 +47,7 @@ def reproduce_results(args):
         config = yaml.safe_load(open(Path("configs") / f"{category}.yaml", "r"))
 
         # Data
-        datamodule = MVTecLightningDatamodule(
+        datamodule = UFLowDatamodule(
             data_dir=args.data,
             category=category,
             input_size=config['model']['input_size'],
