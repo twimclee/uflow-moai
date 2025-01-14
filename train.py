@@ -306,7 +306,7 @@ def train(args):
         ),
     ]
     logger = TensorBoardLogger(save_dir=str(training_dir / 'logs'), name='UFlow')
-    shutil.copy(config_path, str(training_dir / "config.yaml"))
+    # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
         accelerator="auto",
