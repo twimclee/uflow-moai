@@ -2,13 +2,11 @@
 python src/train.py -cat carpet -config configs/carpet.yaml -train_dir ../training/carpet/
 """
 
-import shutil
 import warnings
 import argparse
 from pathlib import Path
 
 import torch
-import yaml
 from ignite.contrib import metrics
 from lightning import LightningModule, Trainer
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -214,14 +212,8 @@ class UFlowTrainer(LightningModule):
             return total_iterations
 
         # Optimizer
-        # optimizer = torch.optim.Adam(
-        #     [{"params": self.parameters(), "initial_lr": self.lr}],
-        #     lr=self.lr,
-        #     weight_decay=self.weight_decay
-        # )
-
         optimizer = torch.optim.Adam(
-            self.parameters(),
+            [{"params": self.parameters(), "initial_lr": self.lr}],
             lr=self.lr,
             weight_decay=self.weight_decay
         )
@@ -245,13 +237,10 @@ def train(args):
     mhyp = MHyp()
     mpfm.load_train_hyp(mhyp)
 
-    # config_path = f"configs/{args.category}.yaml" if args.config_path is None else args.config_path
-    # config = yaml.safe_load(open(config_path, "r"))
-
     # Model
     # ------------------------------------------------------------------------------------------------------------------
     uflow = UFlow(mhyp.input_size,mhyp.flow_steps, mhyp.backbone)
-    uflow = torch.compile(uflow)
+    # uflow = torch.compile(uflow)
     uflow_trainer = UFlowTrainer(
         uflow,
         mhyp.learning_rate,
@@ -306,7 +295,6 @@ def train(args):
         ),
     ]
     logger = TensorBoardLogger(save_dir=mpfm.train_result, name=None, version=None)
-    # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
         accelerator="auto",
