@@ -213,12 +213,16 @@ class UFlowTrainer(LightningModule):
                 total_iterations = 25000
             return total_iterations
 
-        lr = self.lr
-
         # Optimizer
+        # optimizer = torch.optim.Adam(
+        #     [{"params": self.parameters(), "initial_lr": self.lr}],
+        #     lr=self.lr,
+        #     weight_decay=self.weight_decay
+        # )
+
         optimizer = torch.optim.Adam(
-            [{"params": self.parameters(), "initial_lr": lr}],
-            lr=lr,
+            self.parameters(),
+            lr=self.lr,
             weight_decay=self.weight_decay
         )
 
