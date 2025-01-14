@@ -301,7 +301,7 @@ def train(args):
             patience=mhyp.patience,
         ),
     ]
-    logger = TensorBoardLogger(save_dir=mpfm.train_result, name=None)
+    logger = TensorBoardLogger(save_dir=mpfm.train_result, name=None, version=0)
     # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
