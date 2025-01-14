@@ -256,6 +256,7 @@ def train(args):
 
     # Data
     # ------------------------------------------------------------------------------------------------------------------
+    input_size = config['model']['input_size']
     mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
     std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
     image_transform = transforms.Compose(
@@ -273,7 +274,7 @@ def train(args):
     datamodule = UFlowDatamodule(
         data_dir=args.data,
         category=args.category,
-        input_size=config['model']['input_size'],
+        input_size=input_size,
         batch_train=config['trainer']['batch_train'],
         batch_test=config['trainer']['batch_val'],
         image_transform=image_transform,

@@ -20,6 +20,7 @@ def predict(args):
 
     config = yaml.safe_load(open(Path("configs") / f"{args.category}.yaml", "r"))
 
+    input_size = config['model']['input_size']
     mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
     std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
     image_transform = transforms.Compose(
@@ -38,7 +39,7 @@ def predict(args):
     datamodule = UFlowDatamodule(
         data_dir=args.data,
         category=args.category,
-        input_size=config['model']['input_size'],
+        input_size=input_size,
         batch_train=1,
         batch_test=10,
         image_transform=image_transform,
