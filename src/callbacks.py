@@ -15,7 +15,8 @@ class ModelCheckpointByAuROC(ModelCheckpoint):
             dirpath=str(experiment_path),
             mode='max',
             # filename='best_val_roc_auc__epoch_{epoch:04d}__pixel_auroc_{pixel_auroc:.4f}',
-            filename='best_pixel_auroc',
+            # filename='best_pixel_auroc',
+            filename='best',
             auto_insert_metric_name=False,
         )
 

@@ -228,7 +228,6 @@ class UFlowTrainer(LightningModule):
         )
         return [optimizer], [scheduler]
 
-
 def get_training_dir(base_dir, prefix="exp_"):
     out_path = Path(base_dir)
     previous_experiments = [int(l.stem.split('_')[1]) for l in out_path.glob(f'{prefix}*')]
@@ -236,7 +235,6 @@ def get_training_dir(base_dir, prefix="exp_"):
     out_path = out_path / f"{prefix}{last_experiment + 1:04d}"
     out_path.mkdir(exist_ok=True, parents=True)
     return out_path
-
 
 def train(args):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
@@ -270,10 +268,10 @@ def train(args):
         [
             transforms.Resize(input_size),
             transforms.ToTensor(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.0),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.RandomRotation(degrees=90),
+            transforms.ColorJitter(brightness=mhyp.brightness, contrast=mhyp.contrast, saturation=mhyp.saturation, hue=mhyp.hue),
+            transforms.RandomHorizontalFlip(p=mhyp.hflip),
+            transforms.RandomVerticalFlip(p=mhyp.vflip),
+            transforms.RandomRotation(degrees=mhyp.rotation),
             transforms.Normalize(mean.tolist(), std.tolist()),
         ]
     )

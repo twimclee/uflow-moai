@@ -14,7 +14,15 @@ class MHyp:
         self.save_debug_images_every = None
         self.log_predefined_debug_images = None
         self.log_n_images = None
+        self.patience = None
 
+        self.brightness = None
+        self.contrast = None
+        self.saturation = None
+        self.hue = None
+        self.hflip = None
+        self.vflip = None
+        self.rotation = None
 
     def print_data(self):
         for key, value in self.__dict__.items():

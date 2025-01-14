@@ -66,7 +66,7 @@ class UFlowDataset(torch.utils.data.Dataset):
         self.std = STD
         self.un_normalize_transform = transforms.Normalize((-self.mean / self.std).tolist(), (1.0 / self.std).tolist())
         self.image_transform = image_transform
-        
+
         # 확장자 패턴을 추가하여 다양한 이미지 형식을 지원
         file_extensions = ["png", "jpg", "jpeg", "bmp", "tiff"]
         image_file_pattern = [os.path.join(root, "train", "good", f"*.{ext}") for ext in file_extensions]
@@ -123,13 +123,5 @@ def get_debug_images_paths(path):
     debug_images_paths = []
     for dirpath, dirnames, filenames in os.walk(path):
         for filename in filenames:
-            print(os.path.join(dirpath, filename))
             debug_images_paths.append(os.path.join(dirpath, filename))
     return debug_images_paths
-
-    # debug_images_paths = []
-    # debug_images = yaml.safe_load(open(str(Path(__file__).resolve().parent / "defect_debug_images.yaml"), "r"))
-    # for subdir in class_list:
-    #     for img_number in subdir[1]:
-    #         debug_images_paths.append(str(Path(category) / "valid" / subdir[0] / f"{img_number:03d}.png"))
-    # return debug_images_paths
