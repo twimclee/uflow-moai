@@ -292,10 +292,10 @@ def train(args):
     # training_dir = get_training_dir(Path(args.training_dir) / args.category)
     callbacks = [
         MyPrintingCallback(),
-        ModelCheckpointByAuROC(mpfm.train_result, experiment_path=mpfm.weight_path),
-        # ModelCheckpointByAuPRO(mpfm.train_result),
-        # ModelCheckpointBymIoU(mpfm.train_result),
-        # ModelCheckpointByInterval(mpfm.train_result, mhyp.save_ckpt_every),
+        ModelCheckpointByAuROC(mpfm.weight_path),
+        # ModelCheckpointByAuPRO(mpfm.weight_path),
+        # ModelCheckpointBymIoU(mpfm.weight_path),
+        # ModelCheckpointByInterval(mpfm.weight_path, mhyp.save_ckpt_every),
         LearningRateMonitor('epoch'),
         EarlyStopping(
             monitor="pixel_auroc",
