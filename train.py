@@ -251,7 +251,7 @@ def train(args):
     # Model
     # ------------------------------------------------------------------------------------------------------------------
     uflow = UFlow(mhyp.input_size,mhyp.flow_steps, mhyp.backbone)
-
+    uflow = torch.compile(uflow)
     uflow_trainer = UFlowTrainer(
         uflow,
         mhyp.learning_rate,
