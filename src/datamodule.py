@@ -65,7 +65,8 @@ class UFlowDataset(torch.utils.data.Dataset):
         self.mean = MEAN
         self.std = STD
         self.un_normalize_transform = transforms.Normalize((-self.mean / self.std).tolist(), (1.0 / self.std).tolist())
-
+        self.image_transform = image_transform
+        
         # 확장자 패턴을 추가하여 다양한 이미지 형식을 지원
         file_extensions = ["png", "jpg", "jpeg", "bmp", "tiff"]
         image_file_pattern = [os.path.join(root, "train", "good", f"*.{ext}") for ext in file_extensions]
