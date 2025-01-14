@@ -312,7 +312,7 @@ def train(args):
         callbacks=callbacks,
         logger=logger,
         num_sanity_val_steps=0,
-        default_root_dir='.'
+        default_root_dir=mpfm.train_result,
     )
 
     trainer.fit(uflow_trainer, train_dataloaders=datamodule.train_dataloader(), val_dataloaders=datamodule.val_dataloader())
