@@ -303,7 +303,7 @@ def train(args):
             patience=1000,
         ),
     ]
-    logger = TensorBoardLogger(save_dir=str(mpfm.train_result / 'logs'), name='UFlow')
+    logger = TensorBoardLogger(save_dir=mpfm.train_result, name='UFlow')
     # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
