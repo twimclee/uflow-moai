@@ -24,6 +24,9 @@ from src.datamodule import UFlowDatamodule, uflow_un_normalize, get_debug_images
 from src.callbacks import MyPrintingCallback, ModelCheckpointByAuROC, ModelCheckpointByAuPRO, ModelCheckpointBymIoU
 from src.callbacks import ModelCheckpointByInterval
 
+from pathfilemgr import MPathFileManager
+from hyp_data import MHyp, MData
+
 warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
 warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
 
@@ -236,27 +239,31 @@ def get_training_dir(base_dir, prefix="exp_"):
 
 
 def train(args):
-    config_path = f"configs/{args.category}.yaml" if args.config_path is None else args.config_path
-    config = yaml.safe_load(open(config_path, "r"))
+    mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
+    mhyp = MHyp()
+    mpfm.load_train_hyp(mhyp)
+
+    # config_path = f"configs/{args.category}.yaml" if args.config_path is None else args.config_path
+    # config = yaml.safe_load(open(config_path, "r"))
 
     # Model
     # ------------------------------------------------------------------------------------------------------------------
-    uflow = UFlow(config['model']['input_size'], config['model']['flow_steps'], config['model']['backbone'])
+    uflow = UFlow(mhyp.input_size,mhyp.flow_steps, mhyp.backbone)
 
     uflow_trainer = UFlowTrainer(
         uflow,
         args.category,
-        config['trainer']['learning_rate'],
-        config['trainer']['weight_decay'],
-        config['trainer']['log_every_n_epochs'],
-        config['trainer']['save_debug_images_every'],
-        config['trainer']['log_predefined_debug_images'],
-        config['trainer']['log_n_images']
+        mhyp.learning_rate,
+        mhyp.weight_decay,
+        mhyp.log_every_n_epochs,
+        mhyp.save_debug_images_every,
+        mhyp.log_predefined_debug_images,
+        mhyp.log_n_images
     )
 
     # Data
     # ------------------------------------------------------------------------------------------------------------------
-    input_size = config['model']['input_size']
+    input_size = mhyp.input_size
     mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
     std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
     image_transform = transforms.Compose(
@@ -272,14 +279,12 @@ def train(args):
     )
 
     datamodule = UFlowDatamodule(
-        data_dir=args.data,
-        category=args.category,
+        data_dir=mpfm.train_dataset,
         input_size=input_size,
-        batch_train=config['trainer']['batch_train'],
-        batch_test=config['trainer']['batch_val'],
+        batch_train=mhyp.batch_train,
+        batch_test=mhyp.batch_val,
         image_transform=image_transform,
         shuffle_test=True,
-
     )
 
     # Train
@@ -290,7 +295,7 @@ def train(args):
         ModelCheckpointByAuROC(training_dir),
         ModelCheckpointByAuPRO(training_dir),
         ModelCheckpointBymIoU(training_dir),
-         ModelCheckpointByInterval(training_dir, config['trainer']['save_ckpt_every']),
+         ModelCheckpointByInterval(training_dir, mhyp.save_ckpt_every),
         LearningRateMonitor('epoch'),
         EarlyStopping(
             monitor="pixel_auroc",
@@ -304,7 +309,7 @@ def train(args):
     trainer = Trainer(
         accelerator="auto",
         devices=1,
-        max_epochs=config['trainer']['epochs'] + 1,
+        max_epochs=mhyp.epochs + 1,
         log_every_n_steps=10,
         callbacks=callbacks,
         logger=logger,
@@ -324,6 +329,12 @@ if __name__ == "__main__":
     p.add_argument("-config", "--config_path", default=None, type=str)
     p.add_argument("-data", "--data", default="data/mvtec", type=str)
     p.add_argument("-train_dir", "--training_dir", default="training", type=str)
+
+    p.add_argument('--volume', help='volume directory', default='moai')
+    p.add_argument('--project', help='project directory', default='test_project')
+    p.add_argument('--subproject', help='subproject directory', default='test_subproject')
+    p.add_argument('--task', help='task directory', default='test_task')
+    p.add_argument('--version', help='version', default='v1')
     cmd_args, _ = p.parse_known_args()
 
     # Execute

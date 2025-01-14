@@ -20,18 +20,17 @@ def worker_init_fn(worker_id):
 
 
 class UFlowDatamodule(L.LightningDataModule):
-    def __init__(self, data_dir, category, input_size, batch_train, batch_test, image_transform, shuffle_test=False):
+    def __init__(self, data_dir, input_size, batch_train, batch_test, image_transform, shuffle_test=False):
         super().__init__()
         self.data_dir = data_dir
-        self.category = category
         self.input_size = input_size
         self.batch_train = batch_train
         self.batch_val = batch_test
         self.image_transform = image_transform
         self.shuffle_test = shuffle_test
 
-        self.train_dataset = get_dataset(self.data_dir, self.category, self.input_size, self.image_transform, is_train=True)
-        self.val_dataset = get_dataset(self.data_dir, self.category, self.input_size, self.image_transform, is_train=False)
+        self.train_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, is_train=True)
+        self.val_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, is_train=False)
 
     def train_dataloader(self):
         return get_dataloader(self.train_dataset, self.batch_train)
@@ -40,10 +39,9 @@ class UFlowDatamodule(L.LightningDataModule):
         return get_dataloader(self.val_dataset, self.batch_val, shuffle=False)
 
 
-def get_dataset(data_dir, category, input_size, image_transform, is_train):
+def get_dataset(data_dir, input_size, image_transform, is_train):
     return UFlowDataset(
         root=data_dir,
-        category=category,
         input_size=input_size,
         image_transform=image_transform,
         is_train=is_train
@@ -63,33 +61,20 @@ def get_dataloader(dataset, batch, shuffle=True):
 
 
 class UFlowDataset(torch.utils.data.Dataset):
-    def __init__(self, root, category, input_size, image_transform, is_train=True):
+    def __init__(self, root, input_size, image_transform, is_train=True):
         self.mean = MEAN
         self.std = STD
-        self.category = category
         self.un_normalize_transform = transforms.Normalize((-self.mean / self.std).tolist(), (1.0 / self.std).tolist())
-        self.image_transform = image_transform
-        # self.image_transform = transforms.Compose(
-        #     [
-        #         transforms.Resize(input_size),
-        #         transforms.ToTensor(),
-        #         transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.0),
-        #         transforms.RandomHorizontalFlip(p=0.5),
-        #         transforms.RandomVerticalFlip(p=0.5),
-        #         transforms.RandomRotation(degrees=90),
-        #         transforms.Normalize(self.mean.tolist(), self.std.tolist()),
-        #     ]
-        # )
 
         # 확장자 패턴을 추가하여 다양한 이미지 형식을 지원
         file_extensions = ["png", "jpg", "jpeg", "bmp", "tiff"]
-        image_file_pattern = [os.path.join(root, category, "train", "good", f"*.{ext}") for ext in file_extensions]
+        image_file_pattern = [os.path.join(root, "train", "good", f"*.{ext}") for ext in file_extensions]
         if is_train:
             self.image_files = []
             for pattern in image_file_pattern:
                 self.image_files.extend(glob(pattern))
         else:
-            test_pattern = [os.path.join(root, category, "test", "*", f"*.{ext}") for ext in file_extensions]
+            test_pattern = [os.path.join(root, "test", "*", f"*.{ext}") for ext in file_extensions]
             self.image_files = []
             for pattern in test_pattern:
                 self.image_files.extend(glob(pattern))
