@@ -14,10 +14,10 @@ class ModelCheckpointByAuROC(ModelCheckpoint):
             monitor='pixel_auroc',
             dirpath=str(experiment_path),
             mode='max',
-            filename='best_val_roc_auc__epoch_{epoch:04d}__pixel_auroc_{pixel_auroc:.4f}',
+            # filename='best_val_roc_auc__epoch_{epoch:04d}__pixel_auroc_{pixel_auroc:.4f}',
+            filename='best_pixel_auroc',
             auto_insert_metric_name=False,
         )
-
 
 class ModelCheckpointByAuPRO(ModelCheckpoint):
     def __init__(self, experiment_path):
@@ -25,10 +25,10 @@ class ModelCheckpointByAuPRO(ModelCheckpoint):
             monitor='pixel_aupro',
             dirpath=str(experiment_path),
             mode='max',
-            filename='best_val_roc_pro__epoch_{epoch:04d}__pixel_aupro_{pixel_aupro:.4f}',
+            # filename='best_val_roc_pro__epoch_{epoch:04d}__pixel_aupro_{pixel_aupro:.4f}',
+            filename='best_pixel_aupro',
             auto_insert_metric_name=False,
         )
-
 
 class ModelCheckpointBymIoU(ModelCheckpoint):
     def __init__(self, experiment_path):
@@ -36,10 +36,10 @@ class ModelCheckpointBymIoU(ModelCheckpoint):
             monitor='miou',
             dirpath=str(experiment_path),
             mode='max',
-            filename='best_val_miou_nfa__epoch_{epoch:04d}__miou_{miou:.4f}',
+            # filename='best_val_miou_nfa__epoch_{epoch:04d}__miou_{miou:.4f}',
+            filename='best_nfa_miou',
             auto_insert_metric_name=False,
         )
-
 
 class ModelCheckpointByInterval(ModelCheckpoint):
     def __init__(self, experiment_path, every_n_epochs=50):

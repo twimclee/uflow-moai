@@ -293,17 +293,17 @@ def train(args):
     callbacks = [
         MyPrintingCallback(),
         ModelCheckpointByAuROC(mpfm.train_result),
-        ModelCheckpointByAuPRO(mpfm.train_result),
-        ModelCheckpointBymIoU(mpfm.train_result),
-         ModelCheckpointByInterval(mpfm.train_result, mhyp.save_ckpt_every),
+        # ModelCheckpointByAuPRO(mpfm.train_result),
+        # ModelCheckpointBymIoU(mpfm.train_result),
+        # ModelCheckpointByInterval(mpfm.train_result, mhyp.save_ckpt_every),
         LearningRateMonitor('epoch'),
         EarlyStopping(
             monitor="pixel_auroc",
             mode="max",
-            patience=1000,
+            patience=mhyp.patience,
         ),
     ]
-    logger = TensorBoardLogger(save_dir=mpfm.train_result, name='UFlow')
+    logger = TensorBoardLogger(save_dir=mpfm.train_result, version=None)
     # shutil.copy(config_path, str(training_dir / "config.yaml"))
 
     trainer = Trainer(
@@ -325,11 +325,6 @@ if __name__ == "__main__":
     # Args
     # ------------------------------------------------------------------------------------------------------------------
     p = argparse.ArgumentParser()
-    # p.add_argument("-cat", "--category", type=str, required=True)
-    # p.add_argument("-config", "--config_path", default=None, type=str)
-    # p.add_argument("-data", "--data", default="data/mvtec", type=str)
-    # p.add_argument("-train_dir", "--training_dir", default="training", type=str)
-
     p.add_argument('--volume', help='volume directory', default='moai')
     p.add_argument('--project', help='project directory', default='test_project')
     p.add_argument('--subproject', help='subproject directory', default='test_subproject')
