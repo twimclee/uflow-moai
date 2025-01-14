@@ -292,7 +292,7 @@ def train(args):
     # training_dir = get_training_dir(Path(args.training_dir) / args.category)
     callbacks = [
         MyPrintingCallback(),
-        ModelCheckpointByAuROC(mpfm.train_result),
+        ModelCheckpointByAuROC(mpfm.train_result, experiment_path=mpfm.weight_path),
         # ModelCheckpointByAuPRO(mpfm.train_result),
         # ModelCheckpointBymIoU(mpfm.train_result),
         # ModelCheckpointByInterval(mpfm.train_result, mhyp.save_ckpt_every),
@@ -314,6 +314,7 @@ def train(args):
         callbacks=callbacks,
         logger=logger,
         num_sanity_val_steps=0,
+        default_root_dir='.'
     )
 
     trainer.fit(uflow_trainer, train_dataloaders=datamodule.train_dataloader(), val_dataloaders=datamodule.val_dataloader())
