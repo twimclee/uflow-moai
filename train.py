@@ -44,7 +44,8 @@ class UFlowTrainer(LightningModule):
         log_every_n_epochs=25,
         save_debug_images_every=25,
         log_predefined_debug_images=True,
-        log_n_images=20
+        log_n_images=20,
+        val_path=None
     ):
         """
 
@@ -65,7 +66,7 @@ class UFlowTrainer(LightningModule):
         self.log_n_images = log_n_images
         self.debug_img_size = 256
         self.debug_img_resizer = transforms.Compose([transforms.Resize(self.debug_img_size)])
-        self.debug_images = get_debug_images_paths(category)
+        self.debug_images = get_debug_images_paths(val_path)
 
         # Metrics
         self.pixel_auroc = metrics.ROC_AUC()
@@ -258,7 +259,8 @@ def train(args):
         mhyp.log_every_n_epochs,
         mhyp.save_debug_images_every,
         mhyp.log_predefined_debug_images,
-        mhyp.log_n_images
+        mhyp.log_n_images,
+        mpfm.val_path
     )
 
     # Data

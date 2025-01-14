@@ -74,7 +74,7 @@ class UFlowDataset(torch.utils.data.Dataset):
             for pattern in image_file_pattern:
                 self.image_files.extend(glob(pattern))
         else:
-            test_pattern = [os.path.join(root, "test", "*", f"*.{ext}") for ext in file_extensions]
+            test_pattern = [os.path.join(root, "valid", "*", f"*.{ext}") for ext in file_extensions]
             self.image_files = []
             for pattern in test_pattern:
                 self.image_files.extend(glob(pattern))
@@ -103,7 +103,7 @@ class UFlowDataset(torch.utils.data.Dataset):
                 target = torch.zeros([1, image.shape[-2], image.shape[-1]])
             else:
                 target = Image.open(
-                    image_file.replace("test", "ground_truth").replace(
+                    image_file.replace("valid", "ground_truth").replace(
                         os.path.splitext(image_file)[1], "_mask.png"
                     )
                 )
@@ -113,16 +113,22 @@ class UFlowDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.image_files)
 
-
 def uflow_un_normalize(torch_img):
     un_normalize_transform = transforms.Normalize((-MEAN / STD).tolist(), (1.0 / STD).tolist())
     return un_normalize_transform(torch_img)
 
+def get_debug_images_paths(path):
 
-def get_debug_images_paths(category):
     debug_images_paths = []
-    debug_images = yaml.safe_load(open(str(Path(__file__).resolve().parent / "defect_debug_images.yaml"), "r"))
-    for subdir in debug_images[category]['test'].items():
-        for img_number in subdir[1]:
-            debug_images_paths.append(str(Path(category) / "test" / subdir[0] / f"{img_number:03d}.png"))
+    for dirpath, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            print(os.path.join(dirpath, filename))
+            debug_images_paths.append(os.path.join(dirpath, filename))
     return debug_images_paths
+
+    # debug_images_paths = []
+    # debug_images = yaml.safe_load(open(str(Path(__file__).resolve().parent / "defect_debug_images.yaml"), "r"))
+    # for subdir in class_list:
+    #     for img_number in subdir[1]:
+    #         debug_images_paths.append(str(Path(category) / "valid" / subdir[0] / f"{img_number:03d}.png"))
+    # return debug_images_paths
