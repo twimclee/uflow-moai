@@ -63,7 +63,7 @@ def get_dataloader(dataset, batch, shuffle=True):
 
 
 class UFlowDataset(torch.utils.data.Dataset):
-    def __init__(self, root, category, input_size, is_train=True):
+    def __init__(self, root, category, input_size, image_transform, is_train=True):
         self.mean = MEAN
         self.std = STD
         self.category = category
