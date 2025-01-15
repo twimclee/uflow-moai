@@ -49,7 +49,7 @@ def predict(args, trained=None, valdatamodule=None):
         batch_test=10,
         image_transform=image_transform,
         shuffle_test=False,
-        is_train=False
+        mode='test'
     )
 
     progress_bar = None

@@ -264,7 +264,7 @@ def train(args):
         image_transform=image_transform,
         workers=mhyp.workers,
         shuffle_test=True,
-        is_train=True
+        mode='train'
     )
 
     valimage_transform = transforms.Compose(
@@ -282,7 +282,7 @@ def train(args):
         batch_test=10,
         image_transform=valimage_transform,
         shuffle_test=False,
-        is_train=False
+        mode='valtest'
     )
 
     # Model
