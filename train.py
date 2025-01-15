@@ -228,6 +228,7 @@ def train(args):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
     mpfm.load_train_hyp(mhyp)
+    mpfm.save_hyp(mhyp)
 
     # Model
     # ------------------------------------------------------------------------------------------------------------------
