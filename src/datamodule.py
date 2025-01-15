@@ -20,7 +20,7 @@ def worker_init_fn(worker_id):
 
 
 class UFlowDatamodule(L.LightningDataModule):
-    def __init__(self, data_dir, input_size, batch_train, batch_test, image_transform, shuffle_test=False, is_train=True):
+    def __init__(self, data_dir, input_size, batch_train, batch_test, image_transform, workers=1, shuffle_test=False, is_train=True):
         super().__init__()
         self.data_dir = data_dir
         self.input_size = input_size
@@ -36,13 +36,13 @@ class UFlowDatamodule(L.LightningDataModule):
             self.test_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='test')
 
     def train_dataloader(self):
-        return get_dataloader(self.train_dataset, self.batch_train)
+        return get_dataloader(self.train_dataset, self.batch_train, workers=workers)
 
     def val_dataloader(self):
-        return get_dataloader(self.val_dataset, self.batch_val, shuffle=False)
+        return get_dataloader(self.val_dataset, self.batch_val, workers=workers, shuffle=False)
 
     def test_dataloader(self):
-        return get_dataloader(self.test_dataset, 1, shuffle=False)
+        return get_dataloader(self.test_dataset, 1, workers=workers, shuffle=False)
 
 def get_dataset(data_dir, input_size, image_transform, mode):
     return UFlowDataset(
@@ -52,12 +52,12 @@ def get_dataset(data_dir, input_size, image_transform, mode):
         mode=mode
     )
 
-def get_dataloader(dataset, batch, shuffle=True):
+def get_dataloader(dataset, batch, workers=1, shuffle=True):
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch,
         shuffle=shuffle,
-        num_workers=1,
+        num_workers=workers,
         drop_last=False,
         worker_init_fn=worker_init_fn
     )
