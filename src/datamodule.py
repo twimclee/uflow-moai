@@ -45,6 +45,10 @@ class UFlowDatamodule(L.LightningDataModule):
     def test_dataloader(self):
         return get_dataloader(self.test_dataset, 1, shuffle=False)
 
+    def change_mode(self, mode):
+        self.val_dataset.change(mode)
+
+
 def get_dataset(data_dir, input_size, image_transform, mode):
     return UFlowDataset(
         root=data_dir,
@@ -99,6 +103,9 @@ class UFlowDataset(torch.utils.data.Dataset):
             for pattern in test_pattern:
                 self.image_files.extend(glob(pattern))
             self.image_files.sort()
+
+    def change(self, mode):
+        self.mode = mode
 
     def un_normalize(self, img):
         return self.un_normalize_transform(img)

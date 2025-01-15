@@ -151,7 +151,9 @@ class UFlowTrainer(LightningModule):
             image_anomaly_score = torch.amax(anomaly_score, dim=(1, 2, 3))
             self.image_auroc.update((image_anomaly_score.ravel().cpu(), image_targets.ravel().cpu()))
 
+        self.datamodule.change_mode('test')
         predict(self.args, self.model, self.datamodule)
+        self.datamodule.change_mode('valid')
 
     def on_validation_epoch_end(self) -> None:
         # Log metrics
