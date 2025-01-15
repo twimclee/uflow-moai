@@ -33,7 +33,7 @@ class UFlowDatamodule(L.LightningDataModule):
         if mode == 'train':
             self.train_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='train')
             self.val_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='valid')
-        elif mode == 'valid':
+        elif mode == 'valtest':
             self.valtest_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='valtest')
         elif mode == 'test':
             self.test_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='test')
