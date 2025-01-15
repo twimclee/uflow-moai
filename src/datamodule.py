@@ -28,6 +28,7 @@ class UFlowDatamodule(L.LightningDataModule):
         self.batch_val = batch_test
         self.image_transform = image_transform
         self.shuffle_test = shuffle_test
+        self.workers = workers
 
         if is_train:
             self.train_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='train')
@@ -36,13 +37,13 @@ class UFlowDatamodule(L.LightningDataModule):
             self.test_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='test')
 
     def train_dataloader(self):
-        return get_dataloader(self.train_dataset, self.batch_train, workers=workers)
+        return get_dataloader(self.train_dataset, self.batch_train, workers=self.workers)
 
     def val_dataloader(self):
-        return get_dataloader(self.val_dataset, self.batch_val, workers=workers, shuffle=False)
+        return get_dataloader(self.val_dataset, self.batch_val, workers=self.workers, shuffle=False)
 
     def test_dataloader(self):
-        return get_dataloader(self.test_dataset, 1, workers=workers, shuffle=False)
+        return get_dataloader(self.test_dataset, 1, shuffle=False)
 
 def get_dataset(data_dir, input_size, image_transform, mode):
     return UFlowDataset(
