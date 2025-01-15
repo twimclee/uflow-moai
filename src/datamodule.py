@@ -44,12 +44,11 @@ class UFlowDatamodule(L.LightningDataModule):
     def val_dataloader(self):
         return get_dataloader(self.val_dataset, self.batch_val, workers=self.workers, shuffle=False)
 
-    def test_dataloader(self):
-        return get_dataloader(self.test_dataset, 1, shuffle=False)
-
     def valtest_dataloader(self):
         return get_dataloader(self.valtest_dataset, 1, shuffle=False)
 
+    def test_dataloader(self):
+        return get_dataloader(self.test_dataset, 1, shuffle=False)
 
 
 def get_dataset(data_dir, input_size, image_transform, mode):
@@ -153,7 +152,6 @@ def uflow_un_normalize(torch_img):
     return un_normalize_transform(torch_img)
 
 def get_debug_images_paths(path):
-
     debug_images_paths = []
     for dirpath, dirnames, filenames in os.walk(path):
         for filename in filenames:
