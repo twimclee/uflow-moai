@@ -24,6 +24,7 @@ from src.callbacks import ModelCheckpointByInterval
 
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
+from test import predict
 
 # warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
 # warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
@@ -35,6 +36,7 @@ class UFlowTrainer(LightningModule):
 
     def __init__(
         self,
+        args,
         flow_model,
         learning_rate=1e-3,
         weight_decay=1e-7,
@@ -54,6 +56,7 @@ class UFlowTrainer(LightningModule):
         @param log_n_images:
         """
         super(UFlowTrainer, self).__init__()
+        self.args = args
         self.model = flow_model
         self.lr = float(learning_rate)
         self.weight_decay = float(weight_decay)
@@ -143,6 +146,8 @@ class UFlowTrainer(LightningModule):
             image_targets = torch.IntTensor([0 if 'good' in p else 1 for p in paths])
             image_anomaly_score = torch.amax(anomaly_score, dim=(1, 2, 3))
             self.image_auroc.update((image_anomaly_score.ravel().cpu(), image_targets.ravel().cpu()))
+
+        predict(self.args, self.model)
 
     def on_validation_epoch_end(self) -> None:
         # Log metrics
@@ -235,6 +240,7 @@ def train(args):
     uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
     # uflow = torch.compile(uflow)
     uflow_trainer = UFlowTrainer(
+        args,
         uflow,
         mhyp.learning_rate,
         mhyp.weight_decay,

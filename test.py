@@ -18,8 +18,7 @@ from hyp_data import MHyp, MData
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 TARGET_SIZE = 256
 
-
-def predict(args):
+def predict(args, trained=None):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
     mpfm.load_test_hyp(mhyp)
@@ -49,27 +48,36 @@ def predict(args):
     )
 
     progress_bar = tqdm(datamodule.test_dataloader())
-    progress_bar.set_description(f"Test")
+    # progress_bar.set_description(f"Test")
 
     # Load model
     # flow_model = UFlow(**config['model'])
     # flow_model.from_pretrained(Path("models") / "auc" / f"{args.category}.ckpt")
-    flow_model = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
-    flow_model.from_pretrained(f'{mpfm.weight_path}/best.ckpt')
-    flow_model.eval()
-    model = flow_model.to(DEVICE)
 
+    model = None
+    save_path = None
+    if trained is None:
+        flow_model = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
+        flow_model.from_pretrained(f'{mpfm.weight_path}/best.ckpt')
+        flow_model.eval()
+        model = flow_model.to(DEVICE)
+        save_path = mpfm.test_result
+    else:
+        model = trained
+        save_path = mpfm.evaluate_result
+
+    model.eval()
     all_images, all_targets, all_scores, all_lnfas = [], [], [], []
     for images, targets, img_paths in progress_bar:
         print(img_paths)
         with torch.no_grad():
             z, _ = model.forward(images.to(DEVICE))
 
-        all_scores.append(1 - model.get_probability(z, TARGET_SIZE))
-        all_lnfas.append(compute_nfa_anomaly_score_tree(z, TARGET_SIZE))
-        all_images.append(np.clip(mvtec_un_normalize(
-            F.interpolate(images, [TARGET_SIZE, TARGET_SIZE], mode="bilinear", align_corners=False)), 0, 1))
-        all_targets.append(F.interpolate(targets, [TARGET_SIZE, TARGET_SIZE], mode="bilinear", align_corners=False))
+        all_scores.append(1 - model.get_probability(z, input_size))
+        all_lnfas.append(compute_nfa_anomaly_score_tree(z, input_size))
+        all_images.append(np.clip(uflow_un_normalize(
+            F.interpolate(images, [input_size, input_size], mode="bilinear", align_corners=False)), 0, 1))
+        all_targets.append(F.interpolate(targets, [input_size, input_size], mode="bilinear", align_corners=False))
 
     all_scores = torch.cat(all_scores, dim=0)
     all_lnfas = torch.cat(all_lnfas, dim=0)
@@ -96,7 +104,7 @@ def predict(args):
         plt.tight_layout()
 
         # Score 파일 저장
-        plt.savefig(mpfm.test_result / f"likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.savefig(f"{save_path}/likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
         plt.close()
 
         # Log(NFA) heatmap
@@ -109,7 +117,7 @@ def predict(args):
         plt.title('Log(NFA)')
         plt.axis('off')
         plt.tight_layout()
-        plt.savefig(mpfm.test_result / f"log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.savefig(f"{save_path}/log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
         plt.close()
 
 

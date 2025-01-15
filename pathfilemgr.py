@@ -15,6 +15,7 @@ class MPathFileManager:
 		self.version_path = None
 		self.weight_path = None
 		self.train_result = None
+		self.evaluate_result = None
 		self.test_dataset = None
 		self.test_result = None
 		self.train_path = None
@@ -24,41 +25,36 @@ class MPathFileManager:
 		self.data_yaml = None
 		self.result_csv = None
 
-		self.__make_dir()
+		self.__make_dirs()
 
-	def __make_dir(self):
+	def __make_dirs(self):
 		self.project_path = f'/{self.volume}/{self.project}'
 		# self.project_path = f'../{self.project}'
-		if not os.path.exists(self.project_path):
-		     os.makedirs(self.project_path)
+		self.__make_dir(self.project_path)
 
 		self.subproject_path = f'{self.project_path}/{self.subproject}'
-		if not os.path.exists(self.subproject_path):
-		     os.makedirs(self.subproject_path)
+		self.__make_dir(self.subproject_path)
 
 		self.task_path = f'{self.subproject_path}/{self.task}'
-		if not os.path.exists(self.task_path):
-		     os.makedirs(self.task_path)
+		self.__make_dir(self.task_path)
 
 		self.version_path = f'{self.task_path}/{self.version}'
-		if not os.path.exists(self.version_path):
-		     os.makedirs(self.version_path)
+		self.__make_dir(self.version_path)
 
 		self.weight_path = f'{self.version_path}/weights'
-		if not os.path.exists(self.weight_path):
-		     os.makedirs(self.weight_path)
+		self.__make_dir(self.weight_path)
 
 		self.train_result = f'{self.version_path}/training_result'
-		if not os.path.exists(self.train_result):
-		     os.makedirs(self.train_result)
+		self.__make_dir(self.train_result)
+
+		self.evaluate_result = f'{self.train_result}/evaluate_result'
+		self.__make_dir(self.evaluate_result)    
 
 		self.test_dataset = f'{self.version_path}/inference_dataset'
-		if not os.path.exists(self.test_dataset):
-		     os.makedirs(self.test_dataset)
+		self.__make_dir(self.test_dataset)
 
 		self.test_result = f'{self.version_path}/inference_result'
-		if not os.path.exists(self.test_result):
-			os.makedirs(self.test_result)
+		self.__make_dir(self.test_result)
 
 		self.train_dataset = f'{self.task_path}/train_dataset'
 		self.train_path = f'{self.train_dataset}/train'
@@ -70,6 +66,10 @@ class MPathFileManager:
 
 		self.test_hyp_yaml = f'{self.train_result}/hyp.yaml'
 		self.test_data_yaml = f'{self.train_result}/data.yaml'
+
+	def __make_dir(self, path):
+		if not os.path.exists(path):
+			os.makedirs(path)
 
 	def load_train_hyp(self, mcls):
 		self.__load_yaml(self.hyp_yaml, mcls)
