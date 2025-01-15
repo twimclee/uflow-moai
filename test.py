@@ -16,14 +16,12 @@ from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-TARGET_SIZE = 256
+# TARGET_SIZE = 256
 
 def predict(args, trained=None):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
     mpfm.load_test_hyp(mhyp)
-
-    # config = yaml.safe_load(open(Path("configs") / f"{args.category}.yaml", "r"))
 
     input_size = mhyp.input_size
     mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
@@ -36,9 +34,16 @@ def predict(args, trained=None):
         ]
     )
 
+
+    data_path = None
+    if trained is None:
+        data_path = mpfm.test_dataset
+    else:
+        data_path = f"{self.val_path}/good"
+
     # Data
     datamodule = UFlowDatamodule(
-        data_dir=mpfm.test_dataset,
+        data_dir=data_path,
         input_size=input_size,
         batch_train=1,
         batch_test=10,

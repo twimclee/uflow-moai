@@ -98,12 +98,6 @@ class UFlowDataset(torch.utils.data.Dataset):
             for pattern in test_pattern:
                 self.image_files.extend(glob(pattern))
             self.image_files.sort()
-            self.target_transform = transforms.Compose(
-                [
-                    transforms.Resize(input_size),
-                    transforms.ToTensor(),
-                ]
-            )
 
     def un_normalize(self, img):
         return self.un_normalize_transform(img)
