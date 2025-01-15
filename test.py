@@ -39,7 +39,7 @@ def predict(args, trained=None):
     if trained is None:
         data_path = mpfm.test_dataset
     else:
-        data_path = f"{self.val_path}/good"
+        data_path = f"{mpfm.val_path}/good"
 
     # Data
     datamodule = UFlowDatamodule(

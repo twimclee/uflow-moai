@@ -274,6 +274,7 @@ def train(args):
         batch_train=mhyp.batch_train,
         batch_test=mhyp.batch_val,
         image_transform=image_transform,
+        workers=mhyp.workers,
         shuffle_test=True,
         is_train=True
     )
