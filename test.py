@@ -61,6 +61,7 @@ def predict(args):
 
     all_images, all_targets, all_scores, all_lnfas = [], [], [], []
     for images, targets, img_paths in progress_bar:
+        print(img_paths)
         with torch.no_grad():
             z, _ = model.forward(images.to(DEVICE))
 
