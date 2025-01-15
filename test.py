@@ -49,7 +49,7 @@ def predict(args):
     )
 
     progress_bar = tqdm(datamodule.test_dataloader())
-    progress_bar.set_description(f"{args.category.upper()}")
+    progress_bar.set_description(f"Test")
 
     # Load model
     # flow_model = UFlow(**config['model'])
