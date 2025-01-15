@@ -39,15 +39,16 @@ def predict(args):
 
     # Data
     datamodule = UFlowDatamodule(
-        data_dir=args.data,
+        data_dir=mpfm.test_dataset,
         input_size=input_size,
         batch_train=1,
         batch_test=10,
         image_transform=image_transform,
-        shuffle_test=False
+        shuffle_test=False,
+        is_train=False
     )
 
-    progress_bar = tqdm(datamodule.val_dataloader())
+    progress_bar = tqdm(datamodule.test_dataloader())
     progress_bar.set_description(f"{args.category.upper()}")
 
     # Load model

@@ -224,14 +224,6 @@ class UFlowTrainer(LightningModule):
         )
         return [optimizer], [scheduler]
 
-def get_training_dir(base_dir, prefix="exp_"):
-    out_path = Path(base_dir)
-    previous_experiments = [int(l.stem.split('_')[1]) for l in out_path.glob(f'{prefix}*')]
-    last_experiment = max(previous_experiments) if len(previous_experiments) > 0 else 0
-    out_path = out_path / f"{prefix}{last_experiment + 1:04d}"
-    out_path.mkdir(exist_ok=True, parents=True)
-    return out_path
-
 def train(args):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
@@ -239,7 +231,7 @@ def train(args):
 
     # Model
     # ------------------------------------------------------------------------------------------------------------------
-    uflow = UFlow(mhyp.input_size,mhyp.flow_steps, mhyp.backbone)
+    uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
     # uflow = torch.compile(uflow)
     uflow_trainer = UFlowTrainer(
         uflow,
@@ -276,11 +268,11 @@ def train(args):
         batch_test=mhyp.batch_val,
         image_transform=image_transform,
         shuffle_test=True,
+        is_train=True
     )
 
     # Train
     # ------------------------------------------------------------------------------------------------------------------
-    # training_dir = get_training_dir(Path(args.training_dir) / args.category)
     callbacks = [
         MyPrintingCallback(),
         ModelCheckpointByAuROC(mpfm.weight_path),
@@ -307,7 +299,9 @@ def train(args):
         default_root_dir=mpfm.train_result
     )
 
-    trainer.fit(uflow_trainer, train_dataloaders=datamodule.train_dataloader(), val_dataloaders=datamodule.val_dataloader())
+    trainer.fit(uflow_trainer, 
+        train_dataloaders=datamodule.train_dataloader(), 
+        val_dataloaders=datamodule.val_dataloader())
 
 
 if __name__ == "__main__":
