@@ -78,7 +78,7 @@ class UFlowDataset(torch.utils.data.Dataset):
             for pattern in image_file_pattern:
                 self.image_files.extend(glob(pattern))
 
-        elif mode == 'valid'
+        elif mode == 'valid':
             test_pattern = [os.path.join(root, "valid", "*", f"*.{ext}") for ext in file_extensions]
             self.image_files = []
             for pattern in test_pattern:
