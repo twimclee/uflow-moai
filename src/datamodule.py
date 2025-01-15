@@ -20,7 +20,7 @@ def worker_init_fn(worker_id):
 
 
 class UFlowDatamodule(L.LightningDataModule):
-    def __init__(self, data_dir, input_size, batch_train, batch_test, image_transform, workers=1, shuffle_test=False, is_train=True):
+    def __init__(self, data_dir, input_size, batch_train, batch_test, image_transform, workers=1, shuffle_test=False, mode='train'):
         super().__init__()
         self.data_dir = data_dir
         self.input_size = input_size
@@ -30,10 +30,12 @@ class UFlowDatamodule(L.LightningDataModule):
         self.shuffle_test = shuffle_test
         self.workers = workers
 
-        if is_train:
+        if mode == 'train':
             self.train_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='train')
             self.val_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='valid')
-        else:
+        elif mode == 'valid':
+            self.valtest_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='valtest')
+        elif mode == 'test':
             self.test_dataset = get_dataset(self.data_dir, self.input_size, self.image_transform, mode='test')
 
     def train_dataloader(self):
@@ -45,8 +47,9 @@ class UFlowDatamodule(L.LightningDataModule):
     def test_dataloader(self):
         return get_dataloader(self.test_dataset, 1, shuffle=False)
 
-    def change_mode(self, mode):
-        self.val_dataset.change(mode)
+    def valtest_dataloader(self):
+        return get_dataloader(self.valtest_dataset, 1, shuffle=False)
+
 
 
 def get_dataset(data_dir, input_size, image_transform, mode):
@@ -104,8 +107,12 @@ class UFlowDataset(torch.utils.data.Dataset):
                 self.image_files.extend(glob(pattern))
             self.image_files.sort()
 
-    def change(self, mode):
-        self.mode = mode
+        elif mode == 'valtest':
+            test_pattern = [os.path.join(root, "*", f"*.{ext}") for ext in file_extensions]
+            self.image_files = []
+            for pattern in test_pattern:
+                self.image_files.extend(glob(pattern))
+            self.image_files.sort()
 
     def un_normalize(self, img):
         return self.un_normalize_transform(img)
@@ -117,6 +124,7 @@ class UFlowDataset(torch.utils.data.Dataset):
 
         if self.mode == 'train':
             return image
+
         elif self.mode == 'valid':
             if os.path.dirname(image_file).endswith("good"):
                 target = torch.zeros([1, image.shape[-2], image.shape[-1]])
@@ -128,7 +136,12 @@ class UFlowDataset(torch.utils.data.Dataset):
                 )
                 target = self.target_transform(target)
             return image, target, image_file
+
         elif self.mode == 'test':
+            target = torch.zeros([1, image.shape[-2], image.shape[-1]])
+            return image, target, image_file
+
+        elif self.mode == 'valtest':
             target = torch.zeros([1, image.shape[-2], image.shape[-1]])
             return image, target, image_file
 

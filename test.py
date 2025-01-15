@@ -18,7 +18,7 @@ from hyp_data import MHyp, MData
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # TARGET_SIZE = 256
 
-def predict(args, trained=None, datamodule=None):
+def predict(args, trained=None, valdatamodule=None):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
     mpfm.load_test_hyp(mhyp)
@@ -53,10 +53,10 @@ def predict(args, trained=None, datamodule=None):
     )
 
     progress_bar = None
-    if datamodule is None:
+    if valdatamodule is None:
         progress_bar = tqdm(datamodule.test_dataloader())
     else:
-        progress_bar = tqdm(datamodule.val_dataloader())
+        progress_bar = tqdm(valdatamodule.valtest_dataloader())
     # progress_bar.set_description(f"Test")
 
     # Load model
@@ -110,8 +110,6 @@ def predict(args, trained=None, datamodule=None):
         plt.title('Likelihood')
         plt.axis('off')
         plt.tight_layout()
-
-        # Score 파일 저장
         # s = score.mean().item()
         plt.savefig(f"{save_path}/likelihood_{idx}.png", bbox_inches='tight')
         plt.close()

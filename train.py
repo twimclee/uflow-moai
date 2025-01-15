@@ -151,9 +151,7 @@ class UFlowTrainer(LightningModule):
             image_anomaly_score = torch.amax(anomaly_score, dim=(1, 2, 3))
             self.image_auroc.update((image_anomaly_score.ravel().cpu(), image_targets.ravel().cpu()))
 
-        self.datamodule.change_mode('test')
         predict(self.args, self.model, self.datamodule)
-        self.datamodule.change_mode('valid')
 
     def on_validation_epoch_end(self) -> None:
         # Log metrics
@@ -269,6 +267,24 @@ def train(args):
         is_train=True
     )
 
+    valimage_transform = transforms.Compose(
+        [
+            transforms.Resize(input_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean.tolist(), std.tolist()),
+        ]
+    )
+
+    valdatamodule = UFlowDatamodule(
+        data_dir=mpfm.val_path,
+        input_size=input_size,
+        batch_train=1,
+        batch_test=10,
+        image_transform=valimage_transform,
+        shuffle_test=False,
+        is_train=False
+    )
+
     # Model
     # ------------------------------------------------------------------------------------------------------------------
     uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
@@ -276,7 +292,7 @@ def train(args):
     uflow_trainer = UFlowTrainer(
         args,
         uflow,
-        datamodule,
+        valdatamodule,
         mhyp.learning_rate,
         mhyp.weight_decay,
         mhyp.log_every_n_epochs,
