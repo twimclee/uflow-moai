@@ -89,6 +89,7 @@ class UFlowDataset(torch.utils.data.Dataset):
                 [
                     transforms.Resize(input_size),
                     transforms.ToTensor(),
+                    transforms.Normalize(mean.tolist(), std.tolist()),
                 ]
             )
 

@@ -18,7 +18,7 @@ from hyp_data import MHyp, MData
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # TARGET_SIZE = 256
 
-def predict(args, trained=None):
+def predict(args, trained=None, datamodule=None):
     mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
     mhyp = MHyp()
     mpfm.load_test_hyp(mhyp)
@@ -52,7 +52,11 @@ def predict(args, trained=None):
         is_train=False
     )
 
-    progress_bar = tqdm(datamodule.test_dataloader())
+    progress_bar = None
+    if datamodule is None:
+        progress_bar = tqdm(datamodule.test_dataloader())
+    else:
+        progress_bar = tqdm(datamodule.val_dataloader())
     # progress_bar.set_description(f"Test")
 
     # Load model
@@ -74,7 +78,6 @@ def predict(args, trained=None):
     model.eval()
     all_images, all_targets, all_scores, all_lnfas = [], [], [], []
     for images, targets, img_paths in progress_bar:
-        print(img_paths)
         with torch.no_grad():
             z, _ = model.forward(images.to(DEVICE))
 
@@ -109,7 +112,8 @@ def predict(args, trained=None):
         plt.tight_layout()
 
         # Score 파일 저장
-        plt.savefig(f"{save_path}/likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        # s = score.mean().item()
+        plt.savefig(f"{save_path}/likelihood_{idx}.png", bbox_inches='tight')
         plt.close()
 
         # Log(NFA) heatmap
@@ -122,7 +126,8 @@ def predict(args, trained=None):
         plt.title('Log(NFA)')
         plt.axis('off')
         plt.tight_layout()
-        plt.savefig(f"{save_path}/log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        # s = score.mean().item()
+        plt.savefig(f"{save_path}/log_nfa_{idx}.png", bbox_inches='tight')
         plt.close()
 
 

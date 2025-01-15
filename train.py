@@ -32,12 +32,15 @@ from test import predict
 LOG = 0
 
 
+torch.set_float32_matmul_precision('medium')
+
 class UFlowTrainer(LightningModule):
 
     def __init__(
         self,
         args,
         flow_model,
+        datamodule,
         learning_rate=1e-3,
         weight_decay=1e-7,
         log_every_n_epochs=25,
@@ -58,6 +61,7 @@ class UFlowTrainer(LightningModule):
         super(UFlowTrainer, self).__init__()
         self.args = args
         self.model = flow_model
+        self.datamodule = datamodule
         self.lr = float(learning_rate)
         self.weight_decay = float(weight_decay)
         self.log_every_n_epochs = log_every_n_epochs
@@ -147,7 +151,7 @@ class UFlowTrainer(LightningModule):
             image_anomaly_score = torch.amax(anomaly_score, dim=(1, 2, 3))
             self.image_auroc.update((image_anomaly_score.ravel().cpu(), image_targets.ravel().cpu()))
 
-        predict(self.args, self.model)
+        predict(self.args, self.model, self.datamodule)
 
     def on_validation_epoch_end(self) -> None:
         # Log metrics
@@ -235,22 +239,6 @@ def train(args):
     mpfm.load_train_hyp(mhyp)
     mpfm.save_hyp(mhyp)
 
-    # Model
-    # ------------------------------------------------------------------------------------------------------------------
-    uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
-    # uflow = torch.compile(uflow)
-    uflow_trainer = UFlowTrainer(
-        args,
-        uflow,
-        mhyp.learning_rate,
-        mhyp.weight_decay,
-        mhyp.log_every_n_epochs,
-        mhyp.save_debug_images_every,
-        mhyp.log_predefined_debug_images,
-        mhyp.log_n_images,
-        mpfm.val_path
-    )
-
     # Data
     # ------------------------------------------------------------------------------------------------------------------
     input_size = mhyp.input_size
@@ -278,6 +266,25 @@ def train(args):
         shuffle_test=True,
         is_train=True
     )
+
+    # Model
+    # ------------------------------------------------------------------------------------------------------------------
+    uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
+    # uflow = torch.compile(uflow)
+    uflow_trainer = UFlowTrainer(
+        args,
+        uflow,
+        datamodule,
+        mhyp.learning_rate,
+        mhyp.weight_decay,
+        mhyp.log_every_n_epochs,
+        mhyp.save_debug_images_every,
+        mhyp.log_predefined_debug_images,
+        mhyp.log_n_images,
+        mpfm.val_path
+    )
+
+
 
     # Train
     # ------------------------------------------------------------------------------------------------------------------
