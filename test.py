@@ -12,25 +12,27 @@ from src.nfa_tree import compute_nfa_anomaly_score_tree
 from src.datamodule import UFlowDatamodule, uflow_un_normalize
 from src.model import UFlow
 
+from pathfilemgr import MPathFileManager
+from hyp_data import MHyp, MData
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 TARGET_SIZE = 256
 
 
 def predict(args):
+    mpfm = MPathFileManager(args.volume, args.project, args.subproject, args.task, args.version)
+    mhyp = MHyp()
+    mpfm.load_test_hyp(mhyp)
 
-    config = yaml.safe_load(open(Path("configs") / f"{args.category}.yaml", "r"))
+    # config = yaml.safe_load(open(Path("configs") / f"{args.category}.yaml", "r"))
 
-    input_size = config['model']['input_size']
+    input_size = mhyp.input_size
     mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
     std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
     image_transform = transforms.Compose(
         [
             transforms.Resize(input_size),
             transforms.ToTensor(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.0),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.RandomRotation(degrees=90),
             transforms.Normalize(mean.tolist(), std.tolist()),
         ]
     )
@@ -38,7 +40,6 @@ def predict(args):
     # Data
     datamodule = UFlowDatamodule(
         data_dir=args.data,
-        category=args.category,
         input_size=input_size,
         batch_train=1,
         batch_test=10,
@@ -50,8 +51,10 @@ def predict(args):
     progress_bar.set_description(f"{args.category.upper()}")
 
     # Load model
-    flow_model = UFlow(**config['model'])
-    flow_model.from_pretrained(Path("models") / "auc" / f"{args.category}.ckpt")
+    # flow_model = UFlow(**config['model'])
+    # flow_model.from_pretrained(Path("models") / "auc" / f"{args.category}.ckpt")
+    flow_model = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
+    flow_model.from_pretrained(f'{mpfm.weight_path}/best.ckpt')
     flow_model.eval()
     model = flow_model.to(DEVICE)
 
@@ -75,8 +78,8 @@ def predict(args):
     lnfa_min, lnfa_max = np.percentile(all_lnfas, 1.), np.percentile(all_lnfas, 99.)
 
     # Ensure the result folder exists
-    result_dir = Path("result") / args.category
-    result_dir.mkdir(parents=True, exist_ok=True)
+    # result_dir = Path("result") / args.category
+    # result_dir.mkdir(parents=True, exist_ok=True)
 
     for idx, (img, target, score, lnfa) in enumerate(zip(all_images, all_targets, all_scores, all_lnfas)):
         # Likelihood heatmap
@@ -91,7 +94,7 @@ def predict(args):
         plt.tight_layout()
 
         # Score 파일 저장
-        plt.savefig(result_dir / f"likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.savefig(mpfm.test_result / f"likelihood_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
         plt.close()
 
         # Log(NFA) heatmap
@@ -104,7 +107,7 @@ def predict(args):
         plt.title('Log(NFA)')
         plt.axis('off')
         plt.tight_layout()
-        plt.savefig(result_dir / f"log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
+        plt.savefig(mpfm.test_result / f"log_nfa_{idx}_{score.mean().item():.4f}.png", bbox_inches='tight')
         plt.close()
 
 
@@ -112,8 +115,11 @@ if __name__ == "__main__":
     # Args
     # ------------------------------------------------------------------------------------------------------------------
     p = argparse.ArgumentParser()
-    p.add_argument("-cat", "--category", default="carpet", type=str)
-    p.add_argument("-data", "--data", default="data/mvtec", type=str)
+    p.add_argument('--volume', help='volume directory', default='moai')
+    p.add_argument('--project', help='project directory', default='test_project')
+    p.add_argument('--subproject', help='subproject directory', default='test_subproject')
+    p.add_argument('--task', help='task directory', default='test_task')
+    p.add_argument('--version', help='version', default='v1')
     cmd_args, _ = p.parse_known_args()
 
     # Execute
