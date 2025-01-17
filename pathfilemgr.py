@@ -62,8 +62,8 @@ class MPathFileManager:
 
 		self.hyp_yaml = f'{self.task_path}/train_dataset/hyp.yaml'
 		self.data_yaml = f'{self.task_path}/train_dataset/data.yaml'
-		self.result_csv = f'{self.train_path}/results.csv'
-
+		
+		self.result_csv = f'{self.train_result}/results.csv'
 		self.test_hyp_yaml = f'{self.train_result}/hyp.yaml'
 		self.test_data_yaml = f'{self.train_result}/data.yaml'
 
