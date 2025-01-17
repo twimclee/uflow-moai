@@ -22,9 +22,10 @@ from src.datamodule import UFlowDatamodule, uflow_un_normalize, get_debug_images
 from src.callbacks import MyPrintingCallback, ModelCheckpointByAuROC, ModelCheckpointByAuPRO, ModelCheckpointBymIoU
 from src.callbacks import ModelCheckpointByInterval
 
+import csv
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
-from utiles import remaining_time
+from utiles import TimeManager, CSVManager
 from test import predict
 
 
@@ -50,10 +51,9 @@ class UFlowTrainer(LightningModule):
         log_predefined_debug_images=True,
         log_n_images=20,
         val_path=None,
-        result_csv=None,
-        result_file=None,
         epochs=0,
-        since=None
+        csv_mgr=None,
+        time_mgr=None
     ):
         """
 
@@ -117,9 +117,8 @@ class UFlowTrainer(LightningModule):
         self.logger.experiment.add_scalar("04_LearningRate", get_lr(self.optimizers()), self.current_epoch)
 
 
-        remaining = remaining_time(self.since, self.current_epoch, self.epochs)
-        result_csv.writerow([self.current_epoch, remaining])
-        result_file.flush()
+        remaining = time_mgr.get_time_left(self.current_epoch, self.epochs)
+        csv_mgr.writerow([self.current_epoch, remaining])
 
     def validation_step(self, batch, batch_idx):
         images, targets, paths = batch
@@ -302,9 +301,8 @@ def train(args):
     )
 
     ###### result.csv
-    result_file = open(mpfm.result_csv, mode='a', newline='', encoding='utf-8')
-    result_csv = csv.writer(result_file)
-    result_csv.writerow(["epoch", "time"])
+    time_mgr = TimeManager()
+    csv_mgr = CSVManager(mpfm.result_csv, ["epoch", "time"])
 
     # Model
     # ------------------------------------------------------------------------------------------------------------------
@@ -321,11 +319,9 @@ def train(args):
         mhyp.log_predefined_debug_images,
         mhyp.log_n_images,
         mpfm.val_path,
-        result_csv,
-        result_file,
         mhyp.epochs,
-        time.time(),
-
+        csv_mgr,
+        time_mgr
     )
 
 
@@ -358,12 +354,13 @@ def train(args):
         default_root_dir=mpfm.train_result
     )
 
-
+    time_mgr.start()
+    
     trainer.fit(uflow_trainer, 
         train_dataloaders=datamodule.train_dataloader(), 
         val_dataloaders=datamodule.val_dataloader())
-    
-    result_file.close()
+
+    csv_mgr.close()
 
 if __name__ == "__main__":
     # seed_everything(0)
