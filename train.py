@@ -88,10 +88,9 @@ class UFlowTrainer(LightningModule):
         self.test_images = None
         self.test_targets = None
 
-        self.result_csv = result_csv
-        self.result_file = result_file
         self.epochs = epochs
-        self.since = since
+        self.csv_mgr = csv_mgr
+        self.time_mgr = time_mgr
 
     def step(self, batch, batch_idx):
         z, ljd = self.model(batch)
@@ -117,8 +116,8 @@ class UFlowTrainer(LightningModule):
         self.logger.experiment.add_scalar("04_LearningRate", get_lr(self.optimizers()), self.current_epoch)
 
 
-        remaining = time_mgr.get_time_left(self.current_epoch, self.epochs)
-        csv_mgr.writerow([self.current_epoch, remaining])
+        remaining = self.time_mgr.get_time_left(self.current_epoch, self.epochs)
+        self.csv_mgr.writerow([self.current_epoch, remaining])
 
     def validation_step(self, batch, batch_idx):
         images, targets, paths = batch
@@ -355,7 +354,7 @@ def train(args):
     )
 
     time_mgr.start()
-    
+
     trainer.fit(uflow_trainer, 
         train_dataloaders=datamodule.train_dataloader(), 
         val_dataloaders=datamodule.val_dataloader())

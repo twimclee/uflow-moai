@@ -26,7 +26,7 @@ class CSVManager:
     def __init__(self, path, header):
 
         self.result_file = open(path, mode='a', newline='', encoding='utf-8')
-        self.result_csv = csv.writer(result_file)
+        self.result_csv = csv.writer(self.result_file)
         self.result_csv.writerow(header)
 
     def writerow(self, data):
