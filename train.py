@@ -24,7 +24,9 @@ from src.callbacks import ModelCheckpointByInterval
 
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
+from utiles import remaining_time
 from test import predict
+
 
 # warnings.filterwarnings("ignore", category=UserWarning, message="Your val_dataloader has `shuffle=True`")
 # warnings.filterwarnings("ignore", category=UserWarning, message="Checkpoint directory .* exists and is not empty")
@@ -47,7 +49,11 @@ class UFlowTrainer(LightningModule):
         save_debug_images_every=25,
         log_predefined_debug_images=True,
         log_n_images=20,
-        val_path=None
+        val_path=None,
+        result_csv=None,
+        result_file=None,
+        epochs=0,
+        since=None
     ):
         """
 
@@ -82,6 +88,11 @@ class UFlowTrainer(LightningModule):
         self.test_images = None
         self.test_targets = None
 
+        self.result_csv = result_csv
+        self.result_file = result_file
+        self.epochs = epochs
+        self.since = since
+
     def step(self, batch, batch_idx):
         z, ljd = self.model(batch)
 
@@ -104,6 +115,11 @@ class UFlowTrainer(LightningModule):
             for param_group in optimizer.param_groups:
                 return param_group['lr']
         self.logger.experiment.add_scalar("04_LearningRate", get_lr(self.optimizers()), self.current_epoch)
+
+
+        remaining = remaining_time(self.since, self.current_epoch, self.epochs)
+        result_csv.writerow([self.current_epoch, remaining])
+        result_file.flush()
 
     def validation_step(self, batch, batch_idx):
         images, targets, paths = batch
@@ -285,6 +301,11 @@ def train(args):
         mode='valtest'
     )
 
+    ###### result.csv
+    result_file = open(mpfm.result_csv, mode='a', newline='', encoding='utf-8')
+    result_csv = csv.writer(result_file)
+    result_csv.writerow(["epoch", "time"])
+
     # Model
     # ------------------------------------------------------------------------------------------------------------------
     uflow = UFlow(mhyp.input_size, mhyp.flow_steps, mhyp.backbone)
@@ -299,7 +320,12 @@ def train(args):
         mhyp.save_debug_images_every,
         mhyp.log_predefined_debug_images,
         mhyp.log_n_images,
-        mpfm.val_path
+        mpfm.val_path,
+        result_csv,
+        result_file,
+        mhyp.epochs,
+        time.time(),
+
     )
 
 
@@ -332,10 +358,12 @@ def train(args):
         default_root_dir=mpfm.train_result
     )
 
+
     trainer.fit(uflow_trainer, 
         train_dataloaders=datamodule.train_dataloader(), 
         val_dataloaders=datamodule.val_dataloader())
-
+    
+    result_file.close()
 
 if __name__ == "__main__":
     # seed_everything(0)
