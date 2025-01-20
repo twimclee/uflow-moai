@@ -2,8 +2,23 @@ import torch
 import torch.onnx
 import onnx
 
+import argparse
+
+from src.model import UFlow
+
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp, MData
+
+
+
+
+p = argparse.ArgumentParser()
+p.add_argument('--volume', help='volume directory', default='moai')
+p.add_argument('--project', help='project directory', default='test_project')
+p.add_argument('--subproject', help='subproject directory', default='test_subproject')
+p.add_argument('--task', help='task directory', default='test_task')
+p.add_argument('--version', help='version', default='v1')
+args, _ = p.parse_known_args()
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -20,7 +35,7 @@ model.from_pretrained(f'{mpfm.weight_path}/best.ckpt')
 model.eval()
 model = model.to(DEVICE)
 
-input_tensor = torch.randn(1, 3, mhyp.input_size, mhyp.input_size)
+input_tensor = torch.randn(1, 3, mhyp.input_size, mhyp.input_size).to(DEVICE)
 onnx_path = f'{mpfm.weight_path}/best.onnx'
 
 
