@@ -30,7 +30,7 @@ class CSVManager:
         self.result_csv.writerow(header)
 
     def writerow(self, data):
-        self.result_csv.writerow([self.current_epoch, remaining])
+        self.result_csv.writerow(data)
         self.result_file.flush()
 
     def close(self):
