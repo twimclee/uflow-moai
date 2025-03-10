@@ -17,7 +17,7 @@ class TimeManager:
         epochs_done = (epoch - start_epoch + 1)
         avg_epoch_time = elapsed / epochs_done if epochs_done > 0 else 0
         epochs_left = (epochs - 1) - epoch
-        eta_sec = avg_epoch_time * epochs_left
+        eta_sec = max(avg_epoch_time * epochs_left, 0) # avg_epoch_time * epochs_left
 
         return str(timedelta(seconds=int(eta_sec)))
 
