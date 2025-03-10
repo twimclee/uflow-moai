@@ -28,6 +28,7 @@ class CSVManager:
         self.result_file = open(path, mode='a', newline='', encoding='utf-8')
         self.result_csv = csv.writer(self.result_file)
         self.result_csv.writerow(header)
+        self.result_file.flush()  # 헤더를 쓴 후 명시적으로 flush
 
     def writerow(self, data):
         self.result_csv.writerow(data)
