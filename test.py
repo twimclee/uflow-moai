@@ -111,7 +111,7 @@ def predict(args, trained=None, valdatamodule=None):
             plt.imshow(heatmap, alpha=0.4, cmap='turbo', vmin=0, vmax=1)
             if target.sum() > 0:
                 plt.contour(target[0].detach().cpu().numpy(), [0.5])
-            plt.title('Likelihood')
+            # plt.title('Likelihood')
             plt.axis('off')
             plt.tight_layout()
             # s = score.mean().item()
@@ -125,7 +125,7 @@ def predict(args, trained=None, valdatamodule=None):
             plt.imshow(heatmap, alpha=0.4, cmap='turbo', vmin=0, vmax=1)
             if target.sum() > 0:
                 plt.contour(target[0].detach().cpu().numpy(), [0.5])
-            plt.title('Log(NFA)')
+            # plt.title('Log(NFA)')
             plt.axis('off')
             plt.tight_layout()
             # s = score.mean().item()
